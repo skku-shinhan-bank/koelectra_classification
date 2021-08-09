@@ -79,6 +79,13 @@ class KoElectraClassificationTrainer:
 		history_test_acc = []
 		history_train_time = []
 
+		print("[TRAINING]")
+		print("train data: {} / train label: {}".format(len(train_data_list), len(train_label_list)))
+		print("test data: {} / test label: {}".format(len(test_data_list), len(test_label_list)))
+		print("epochs: {}".format(num_of_epochs))
+		print("classes: {}".format(num_of_classes))
+		print("model output path: {}".format(model_output_path))
+
 		for epoch_index in range(num_of_epochs):
 			print("[epoch {}]\n".format(epoch_index + 1))
 
