@@ -29,10 +29,10 @@ trainer.train(
     train_label=train_label,
     test_data=test_data,
     test_label=test_label,
-    num_of_epochs = 5,       # Num of Epoch
-    batch_size = 32,      # 배치 사이즈
-    num_of_classes = 5,    #분류 개수
-    max_sequence_length = 128,     #최대길이
+    num_of_epochs = 5,
+    batch_size = 32,
+    num_of_classes = 5,
+    max_sequence_length = 128,
     learning_rate = 5e-5,
     max_gradient_normalization = 1,
     warmup_ratio = 0.1,
