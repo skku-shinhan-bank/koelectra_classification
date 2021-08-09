@@ -14,7 +14,10 @@ class KoElectraClassificationPredictor:
         self.classification_model = model
         self.tokenizer = tokenizer
 
-    def predict(self, data_list, max_sequence_length, batch_size, device):
+    def predict(self, data_list, max_sequence_length, batch_size):
+        ctx = "cuda" if torch.cuda.is_available() else "cpu"
+        device = torch.device(ctx)
+
         label_list = []
 
         for data in data_list:

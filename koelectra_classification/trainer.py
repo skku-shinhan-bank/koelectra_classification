@@ -30,9 +30,11 @@ class KoElectraClassificationTrainer:
 		num_of_epochs,
 		max_gradient_normalization,
 		warmup_ratio,
-		device,
 		model_output_path,
 	):
+		ctx = "cuda" if torch.cuda.is_available() else "cpu"
+		device = torch.device(ctx)
+
 		classification_model = KoElectraClassificationModel(num_of_classes=num_of_classes).to(device)
 		tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
 
