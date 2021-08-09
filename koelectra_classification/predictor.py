@@ -8,7 +8,7 @@ class KoElectraClassificationPredictor:
     def __init__(self, num_of_classes, model_path):
         ctx = "cuda" if torch.cuda.is_available() else "cpu"
         device = torch.device(ctx)
-        
+
         model = KoElectraClassificationModel(num_of_classes=num_of_classes)
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -45,7 +45,8 @@ class KoElectraClassificationPredictor:
                 }
                 output = self.classification_model(**inputs)
                 max_vals, max_indices = torch.max(output, 1)
-                predict_class_list.append(max_indices.item())
+                for max_index in max_indices:
+                    predict_class_list.append(max_index.item())
 
         return predict_class_list
                 
