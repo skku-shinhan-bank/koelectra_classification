@@ -14,9 +14,10 @@ class KoElectraClassificationModel(nn.Module):
         self.pretrained_electra_model = ElectraPreTrainedModel.from_pretrained(
             pretrained_model_name_or_path = "monologg/koelectra-base-v3-discriminator",
             config = electra_config,
-            num_labels = num_of_classes,
+            num_of_classes = num_of_classes,
         )
-        self.model = KoElectraClassificationHead(electra_config, num_of_classes)
+        self.classifier_model = nn.Linear(electra_config.hidden_size , num_of_classes)
+        self.dropout = nn.Dropout(electra_config.hidden_dropout_prob)
         self.num_of_classes = num_of_classes
 
     def forward(
@@ -42,31 +43,16 @@ class KoElectraClassificationModel(nn.Module):
             output_hidden_states,
         )
 
-        sequence_output = discriminator_hidden_states[0]
-        return self.model(sequence_output)
-        
-        logits = self.model(sequence_output)
-
-        outputs = (logits,) + discriminator_hidden_states[1:]  # add hidden states and attention if they are here
-
-        if labels is not None:
-            if self.num_of_classes == 1:
-            #  We are doing regression
-                loss_fct = MSELoss()
-                loss = loss_fct(logits.view(-1), labels.view(-1))
-            else:
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_of_classes), labels.view(-1))
-                outputs = (loss,) + outputs
-
-        return outputs  # (loss), (logits), (hidden_states), (attentions)
+        output = discriminator_hidden_states[0]
+        output = self.dropout(output[:, 0, :])
+        return self.classifier_model(output)
 
 class KoElectraClassificationHead(nn.Module):
-    def __init__(self, config, num_labels):
+    def __init__(self, config, num_of_classes):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, 4*config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.out_proj = nn.Linear(4*config.hidden_size,num_labels)
+        self.out_proj = nn.Linear(4*config.hidden_size,num_of_classes)
 
     def forward(self, features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
