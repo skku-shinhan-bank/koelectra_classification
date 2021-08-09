@@ -79,7 +79,6 @@ class KoElectraClassificationTrainer:
 				inputs = {
 					'input_ids': data['input_ids'],
 					'attention_mask': data['attention_mask'],
-					'labels': data['labels']
 				}
 				outputs = classification_model(**inputs)
 				loss = loss_function(outputs, data['labels'])
@@ -107,7 +106,6 @@ class KoElectraClassificationTrainer:
 					inputs = {
 						'input_ids': data['input_ids'],
 						'attention_mask': data['attention_mask'],
-						'labels': data['labels']
 					}
 					output = classification_model(**inputs)
 					test_acc += calc_accuracy(output, data['labels'])
