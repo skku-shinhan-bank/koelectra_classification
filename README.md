@@ -31,7 +31,7 @@ trainer.train(
     test_label=test_label,
     num_of_epochs = 5,
     batch_size = 32,
-    num_of_classes = 7,
+    num_of_classes = 5,
     max_sequence_length = 128,
     learning_rate = 5e-5,
     max_gradient_normalization = 1,
