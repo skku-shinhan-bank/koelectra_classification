@@ -26,7 +26,7 @@ class KoElectraClassificationTrainer:
 		max_sequence_length,
 		learning_rate,
 		num_of_epochs,
-		max_gradient_norm,
+		max_gradient_normalization,
 		warmup_ratio,
 		device,
 		model_output_path,
@@ -85,7 +85,7 @@ class KoElectraClassificationTrainer:
 				loss = loss_function(outputs, data['labels'])
 				train_losses.append(loss.item())
 				loss.backward()
-				torch.nn.utils.clip_grad_norm_(classification_model.parameters(), max_gradient_norm)
+				torch.nn.utils.clip_grad_norm_(classification_model.parameters(), max_gradient_normalization)
 				optimizer.step()
 				scheduler.step()  # Update learning rate schedule
 				train_acc += calc_accuracy(outputs, data['labels'])
