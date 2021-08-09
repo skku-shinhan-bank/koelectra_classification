@@ -1,3 +1,3 @@
-from model import *
+from model import KoElectraClassificationModel
 from predictor import *
-from trainer import *
+from trainer import KoElectraClassificationTrainer

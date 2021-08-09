@@ -3,37 +3,41 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoTokenizer, ElectraForSequenceClassification, AdamW
-from .model.koelectra_classifier import KoElectraClassifier
-from tqdm.notebook import tqdm
+from transformers import AutoTokenizer, AdamW
+from koelectra_classification import KoElectraClassificationModel
 import torch
-import os
-from tqdm import tqdm, tqdm_notebook
-from transformers import (
-	ElectraConfig,
-)
+from tqdm import tqdm_notebook
 import time
-from .confusion_matrix import ConfusionMatrix
 
 class KoElectraClassificationTrainer:
 	def __init__(self):
 		pass
 
-	def train(self, train_data, train_label, test_data, test_label, config, device, model_output_path):
-		electra_config = ElectraConfig.from_pretrained("monologg/koelectra-base-v3-discriminator")
-		classification_model = KoElectraClassifier.from_pretrained(pretrained_model_name_or_path = "monologg/koelectra-base-v3-discriminator", config = electra_config, num_labels = config.num_label)
+	def train(
+		self,
+		train_data,
+		train_label,
+		test_data,
+		test_label,
+		num_of_classes,
+		batch_size,
+		max_sequence_length,
+		learning_rate,
+		num_of_epochs,
+		device,
+		model_output_path
+	):
+		classification_model = KoElectraClassificationModel(num_of_classes=num_of_classes).to(device)
 		tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
 
 		train_zipped_data = make_zipped_data(train_data, train_label)
 		test_zipped_data = make_zipped_data(test_data, test_label)
 
-		classification_model.to(device)
+		train_dataset = KoElectraClassificationDataset(tokenizer=tokenizer, device=device, zipped_data=train_zipped_data, max_seq_len = max_sequence_length)
+		test_dataset = KoElectraClassificationDataset(tokenizer=tokenizer, device=device, zipped_data=test_zipped_data, max_seq_len = max_sequence_length)
 
-		train_dataset = KoElectraClassificationDataset(tokenizer=tokenizer, device=device, zipped_data=train_zipped_data, max_seq_len = config.max_seq_len)
-		test_dataset = KoElectraClassificationDataset(tokenizer=tokenizer, device=device, zipped_data=test_zipped_data, max_seq_len = config.max_seq_len)
-
-		train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-		test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=config.batch_size, shuffle=True)
+		train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+		test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
 		no_decay = ['bias', 'LayerNorm.weight']
 		optimizer_grouped_parameters = [
@@ -46,7 +50,7 @@ class KoElectraClassificationTrainer:
 				'weight_decay': 0.0
 			},
 		]
-		optimizer = AdamW(optimizer_grouped_parameters, lr=config.learning_rate)
+		optimizer = AdamW(optimizer_grouped_parameters, lr=learning_rate)
 
 		# data history for experiments
 		history_loss = []
@@ -54,7 +58,7 @@ class KoElectraClassificationTrainer:
 		history_test_acc = []
 		history_train_time = []
 
-		for epoch_index in range(config.n_epoch):
+		for epoch_index in range(num_of_epochs):
 			print("[epoch {}]\n".format(epoch_index + 1))
 
 			train_losses = []
@@ -84,7 +88,7 @@ class KoElectraClassificationTrainer:
 			history_train_acc.append(train_acc)
 			history_train_time.append(end_time - start_time)
 
-			cm = ConfusionMatrix(config.num_label)
+			cm = ConfusionMatrix(num_of_classes)
 			test_losses = []
 			test_acc = 0
 			classification_model.eval()
@@ -113,16 +117,17 @@ class KoElectraClassificationTrainer:
 			history_test_acc.append(test_acc)
 
 		torch.save({
-			'epoch': config.n_epoch,  # 현재 학습 epoch
+			'epoch': num_of_epochs,  # 현재 학습 epoch
 			'model_state_dict': classification_model.state_dict(),  # 모델 저장
 			'optimizer_state_dict': optimizer.state_dict(),  # 옵티마이저 저장
 			'loss': loss.item(),  # Loss 저장
-			'train_step': config.n_epoch * config.batch_size,  # 현재 진행한 학습
+			'train_step': num_of_epochs * batch_size,  # 현재 진행한 학습
 			'total_train_step': len(train_loader)  # 현재 epoch에 학습 할 총 train step
 		}, model_output_path)
+
 		# Print the result
 		print("RESULT - copy and paste this to the report")
-		for epoch_index in range(config.n_epoch):
+		for epoch_index in range(num_of_epochs):
 			print('epoch ', epoch_index, end='\t')
 			print('')
 		for i in history_loss:
@@ -151,11 +156,11 @@ def make_zipped_data(data, label):
 
 class KoElectraClassificationDataset(Dataset):
 	def __init__(self,
-							device = None,
-							tokenizer = None,
-							zipped_data = None,
-							max_seq_len = None, # KoBERT max_length
-							):
+		device = None,
+		tokenizer = None,
+		zipped_data = None,
+		max_seq_len = None, # KoBERT max_length
+	):
 
 		self.device = device
 		self.data =[]
@@ -199,3 +204,19 @@ def calc_accuracy(X,Y):
 	max_vals, max_indices = torch.max(X, 1)
 	train_acc = (max_indices == Y).sum().data.cpu().numpy()/max_indices.size()[0]
 	return train_acc
+
+class ConfusionMatrix:
+  def __init__(self, column):
+    self.matrix = []
+    for i in range(column):
+      self.matrix.append([])
+      for j in range(column):
+       self. matrix[i].append(0)
+  def add(self, real_class_id, predict_class_id):
+    self.matrix[real_class_id][predict_class_id] += 1
+  def show(self):
+    for row in self.matrix:
+      print(row)
+  def get(self):
+    return self.matrix
+    
