@@ -7,7 +7,8 @@ from torch.utils.data import DataLoader
 class KoElectraClassificationPredictor:
     def __init__(self, num_of_classes, model_path):
         model = KoElectraClassificationModel(num_of_classes=num_of_classes)
-        model.load_state_dict(torch.load(model_path))
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
         tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
 

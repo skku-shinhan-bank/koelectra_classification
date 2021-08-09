@@ -39,7 +39,6 @@ trainer.train(
 ## Predict
 
 ```python
-
 from koelectra_classification import KoElectraClassificationPredictor
 
 predictor = KoElectraClassificationPredictor(
@@ -47,9 +46,8 @@ predictor = KoElectraClassificationPredictor(
     model_path='output.pth',
 )
 predict_class_list = predictor.predict(
-   data_list=['hihi', 'heelo', '로그인이 안됨']
-   max_sequence_length=128
-   batch_size=32
+   data_list=['hihi', 'heelo', '로그인이 안됨'],
+   max_sequence_length=128,
+   batch_size=32,
 )
-
 ```
