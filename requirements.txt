@@ -1,0 +1,4 @@
+transformers
+torch
+kobert_transformers
+pandas
