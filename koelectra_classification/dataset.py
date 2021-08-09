@@ -33,14 +33,13 @@ class KoElectraClassificationDataset(Dataset):
 
 			# Label
 			label = int(label_list[index])
-			data = {
+
+			self.data.append({
 				'input_ids': torch.tensor(index_of_words).to(self.device),
 				'token_type_ids': torch.tensor(token_type_ids).to(self.device),
 				'attention_mask': torch.tensor(attention_mask).to(self.device),
 				'labels': torch.tensor(label).to(self.device)
-			}
-
-			self.data.append(data)
+			})
 
 	def __len__(self):
 		return len(self.data)
