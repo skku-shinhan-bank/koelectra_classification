@@ -32,7 +32,7 @@ class KoElectraClassificationDataset(Dataset):
 			attention_mask += [0] * padding_length
 
 			# Label
-			label = int(label_list[1])
+			label = int(label_list[index])
 			data = {
 				'input_ids': torch.tensor(index_of_words).to(self.device),
 				'token_type_ids': torch.tensor(token_type_ids).to(self.device),
