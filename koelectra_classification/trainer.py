@@ -80,20 +80,21 @@ class KoElectraClassificationTrainer:
 					'input_ids': data['input_ids'],
 					'attention_mask': data['attention_mask'],
 				}
-				outputs = classification_model(**inputs)
-				loss = loss_function(outputs, data['labels'])
+				output = classification_model(**inputs)
+				max_vals, max_indices = torch.max(output, 1)
+				train_acc += (max_indices == data['labels']).sum().data.cpu().numpy()
+				loss = loss_function(output, data['labels'])
 				train_losses.append(loss.item())
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(classification_model.parameters(), max_gradient_normalization)
 				optimizer.step()
 				scheduler.step()  # Update learning rate schedule
-				train_acc += calc_accuracy(outputs, data['labels'])
 			train_time = time.time() - start_time
 			train_loss = np.mean(train_losses)
-			train_acc = train_acc / len(train_dataset)
-			print("acc {} / loss {} / train time {}\n".format(train_acc / (batch_index+1), train_loss, train_time))
+			train_acc = train_acc / len(train_zipped_data)
+			print("acc {} / loss {} / train time {}\n".format(train_acc, train_loss, train_time))
 			history_loss.append(train_loss)
-			history_train_acc.append(train_acc / (batch_index + 1))
+			history_train_acc.append(train_acc)
 			history_train_time.append(train_time)
 
 			cm = ConfusionMatrix(num_of_classes)
@@ -108,14 +109,15 @@ class KoElectraClassificationTrainer:
 						'attention_mask': data['attention_mask'],
 					}
 					output = classification_model(**inputs)
-					test_acc += calc_accuracy(output, data['labels'])
-					
+					max_vals, max_indices = torch.max(output, 1)
+					test_acc += (max_indices == data['labels']).sum().data.cpu().numpy()
+					loss = loss_function(output, data['labels'])
+					test_losses.append(loss.item())
 					for index, real_class_id in enumerate(data['labels']):
-						max_vals, max_indices = torch.max(output, 1)
 						cm.add(real_class_id, max_indices[index].item())
 			
 			test_loss = np.mean(test_losses)
-			test_acc = test_acc / len(test_dataset)
+			test_acc = test_acc / len(test_zipped_data)
 			print("acc {} / loss {}".format(test_acc, test_loss))
 			print("<confusion matrix>\n", pd.DataFrame(cm.get()))
 			print("\n")
