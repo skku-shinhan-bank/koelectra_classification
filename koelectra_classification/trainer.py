@@ -110,7 +110,7 @@ class KoElectraClassificationTrainer:
 					output = classification_model(**inputs)
 					test_acc += calc_accuracy(output, data['labels'])
 					
-					for index, real_class_id in enumerate(inputs['labels']):
+					for index, real_class_id in enumerate(data['labels']):
 						max_vals, max_indices = torch.max(output, 1)
 						cm.add(real_class_id, max_indices[index].item())
 			
