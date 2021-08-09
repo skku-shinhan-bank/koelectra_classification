@@ -114,7 +114,7 @@ class KoElectraClassificationTrainer:
 					
 					for index, real_class_id in enumerate(inputs['labels']):
 						max_vals, max_indices = torch.max(output, 1)
-          				cm.add(real_class_id, max_indices[index].item())
+						cm.add(real_class_id, max_indices[index].item())
 			
 			test_loss = np.mean(test_losses)
 			test_acc = test_acc / len(test_dataset)
@@ -216,19 +216,19 @@ class ConfusionMatrix:
   def __init__(self, column):
     self.matrix = []
     for i in range(column):
-      self.matrix.append([])
-      for j in range(column):
-       self. matrix[i].append(0)
+        self.matrix.append([])
+        for j in range(column):
+            self. matrix[i].append(0)
   def add(self, real_class_id, predict_class_id):
-    self.matrix[real_class_id][predict_class_id] += 1
+        self.matrix[real_class_id][predict_class_id] += 1
   def show(self):
-    for row in self.matrix:
-      print(row)
+        for row in self.matrix:
+            print(row)
   def get(self):
-    return self.matrix
+        return self.matrix
     
 
 def calc_accuracy(X,Y):
-  max_vals, max_indices = torch.max(X, 1)
-  train_acc = (max_indices == Y).sum().data.cpu().numpy()/max_indices.size()[0]
-  return train_acc
+    max_vals, max_indices = torch.max(X, 1)
+    train_acc = (max_indices == Y).sum().data.cpu().numpy()/max_indices.size()[0]
+    return train_acc
