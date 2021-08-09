@@ -15,7 +15,7 @@ class KoElectraClassificationDataset(Dataset):
 		self.tokenizer = tokenizer
 
 		for index, data in enumerate(data_list):
-			index_of_words = self.tokenizer.encode(data[0])
+			index_of_words = self.tokenizer.encode(data)
 
 			if len(index_of_words) > max_sequence_length:
 				index_of_words = index_of_words[:max_sequence_length]
