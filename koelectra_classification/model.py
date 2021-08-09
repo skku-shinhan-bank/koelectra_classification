@@ -11,11 +11,7 @@ class KoElectraClassificationModel(nn.Module):
         super(KoElectraClassificationModel, self).__init__()
         
         electra_config = ElectraConfig.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        self.koelectra_model = ElectraModel.from_pretrained(
-            pretrained_model_name_or_path = "monologg/koelectra-base-v3-discriminator",
-            config = electra_config,
-            num_of_classes = num_of_classes,
-        )
+        self.koelectra_model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
         self.classifier_model = nn.Linear(electra_config.hidden_size , num_of_classes)
         self.dropout = nn.Dropout(electra_config.hidden_dropout_prob)
         self.num_of_classes = num_of_classes
