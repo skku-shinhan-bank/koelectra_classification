@@ -1,15 +1,17 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
 from torch.nn import functional as F
-from torch.utils.data import DataLoader, Dataset
-from transformers import AutoTokenizer, AdamW
+from torch.utils.data import DataLoader
+from transformers import AdamW
 from koelectra_classification import KoElectraClassificationModel
 import torch
 from tqdm import tqdm_notebook
 import time
 from torch.nn import CrossEntropyLoss
 from transformers.optimization import get_cosine_schedule_with_warmup
+from transformers import ElectraTokenizer
+from .dataset import KoElectraClassificationDataset
 
 class KoElectraClassificationTrainer:
 	def __init__(self):
@@ -17,10 +19,10 @@ class KoElectraClassificationTrainer:
 
 	def train(
 		self,
-		train_data,
-		train_label,
-		test_data,
-		test_label,
+		train_data_list,
+		train_label_list,
+		test_data_list,
+		test_label_list,
 		num_of_classes,
 		batch_size,
 		max_sequence_length,
@@ -32,13 +34,22 @@ class KoElectraClassificationTrainer:
 		model_output_path,
 	):
 		classification_model = KoElectraClassificationModel(num_of_classes=num_of_classes).to(device)
-		tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
+		tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
 
-		train_zipped_data = make_zipped_data(train_data, train_label)
-		test_zipped_data = make_zipped_data(test_data, test_label)
-
-		train_dataset = KoElectraClassificationDataset(tokenizer=tokenizer, device=device, zipped_data=train_zipped_data, max_seq_len = max_sequence_length)
-		test_dataset = KoElectraClassificationDataset(tokenizer=tokenizer, device=device, zipped_data=test_zipped_data, max_seq_len = max_sequence_length)
+		train_dataset = KoElectraClassificationDataset(
+			tokenizer=tokenizer,
+			device=device,
+			data_list=train_data_list,
+			label_list=train_label_list,
+			max_sequence_length = max_sequence_length
+		)
+		test_dataset = KoElectraClassificationDataset(
+			tokenizer=tokenizer,
+			device=device,
+			data_list=test_data_list,
+			label_list=test_label_list,
+			max_sequence_length = max_sequence_length
+		)
 
 		train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 		test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
@@ -91,7 +102,7 @@ class KoElectraClassificationTrainer:
 				scheduler.step()  # Update learning rate schedule
 			train_time = time.time() - start_time
 			train_loss = np.mean(train_losses)
-			train_acc = train_acc / len(train_zipped_data)
+			train_acc = train_acc / len(train_data_list)
 			print("acc {} / loss {} / train time {}\n".format(train_acc, train_loss, train_time))
 			history_loss.append(train_loss)
 			history_train_acc.append(train_acc)
@@ -117,7 +128,7 @@ class KoElectraClassificationTrainer:
 						cm.add(real_class_id, max_indices[index].item())
 			
 			test_loss = np.mean(test_losses)
-			test_acc = test_acc / len(test_zipped_data)
+			test_acc = test_acc / len(test_data_list)
 			print("acc {} / loss {}".format(test_acc, test_loss))
 			print("<confusion matrix>\n", pd.DataFrame(cm.get()))
 			print("\n")
@@ -160,52 +171,6 @@ def make_zipped_data(data, label):
 		zipped_data.append(row)
 
 	return zipped_data
-
-class KoElectraClassificationDataset(Dataset):
-	def __init__(self,
-		device = None,
-		tokenizer = None,
-		zipped_data = None,
-		max_seq_len = None, # KoBERT max_length
-	):
-
-		self.device = device
-		self.data =[]
-		self.tokenizer = tokenizer
-
-		for zd in zipped_data:
-			index_of_words = self.tokenizer.encode(zd[0])
-
-			if len(index_of_words) > max_seq_len:
-				index_of_words = index_of_words[:max_seq_len]
-
-			token_type_ids = [0] * len(index_of_words)
-			attention_mask = [1] * len(index_of_words)
-
-			# Padding Length
-			padding_length = max_seq_len - len(index_of_words)
-
-			# Zero Padding
-			index_of_words += [0] * padding_length
-			token_type_ids += [0] * padding_length
-			attention_mask += [0] * padding_length
-
-			# Label
-			label = int(zd[1])
-			data = {
-				'input_ids': torch.tensor(index_of_words).to(self.device),
-				'token_type_ids': torch.tensor(token_type_ids).to(self.device),
-				'attention_mask': torch.tensor(attention_mask).to(self.device),
-				'labels': torch.tensor(label).to(self.device)
-			}
-
-			self.data.append(data)
-
-	def __len__(self):
-		return len(self.data)
-	def __getitem__(self,index):
-		item = self.data[index]
-		return item
 
 def calc_accuracy(X,Y):
 	max_vals, max_indices = torch.max(X, 1)

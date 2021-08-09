@@ -13,22 +13,22 @@ pip install git+https://github.com/skku-shinhan-bank/koelectra_classification.gi
 from koelectra_classification import KoElectraClassificationTrainer
 import torch
 
-train_data = [
+train_data_list = [
   'hello', 'hi', 'im', 'shinhan', 'app review'
 ]
-train_label = [0, 1, 2, 3, 4]
-test_data = ['hi', 'hello']
-test_label = [0, 1]
+train_label_list = [0, 1, 2, 3, 4]
+test_data_list = ['hi', 'hello']
+test_label_list = [0, 1]
 
 ctx = "cuda" if torch.cuda.is_available() else "cpu"
 device = torch.device(ctx)
 
 trainer = KoElectraClassificationTrainer()
 trainer.train(
-    train_data=train_data,
-    train_label=train_label,
-    test_data=test_data,
-    test_label=test_label,
+    train_data_list=train_data_list,
+    train_label_list=train_label_list,
+    test_data_list=test_data_list,
+    test_label_list=test_label_list,
     num_of_epochs = 5,
     batch_size = 32,
     num_of_classes = 5,
