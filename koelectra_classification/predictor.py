@@ -35,18 +35,21 @@ class KoElectraClassificationPredictor:
         )
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-        predict_class_list = []
+        probability_per_class_list = []
 
         for batch_index, data in enumerate(dataloader):
             with torch.no_grad():
+                probability_per_class = []
                 inputs = {
                     'input_ids': data['input_ids'],
                     'attention_mask': data['attention_mask'],
                 }
                 output = self.classification_model(**inputs)
-                max_vals, max_indices = torch.max(output, 1)
-                for max_index in max_indices:
-                    predict_class_list.append(max_index.item())
+                
+                for index, value in enumerate(output[0]):
+                    probability_per_class.append((index, value.item()))
 
-        return predict_class_list
+                probability_per_class_list.append(probability_per_class)
+
+        return probability_per_class_list
                 
