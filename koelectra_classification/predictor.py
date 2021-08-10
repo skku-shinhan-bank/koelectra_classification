@@ -46,8 +46,8 @@ class KoElectraClassificationPredictor:
                 }
                 output = self.classification_model(**inputs)
                 
-                for index, value in enumerate(output[0]):
-                    probability_per_class.append((index, value.item()))
+                for index, prediction in enumerate(output):
+                    probability_per_class.append(prediction.tolist())
 
                 probability_per_class_list.append(probability_per_class)
 
