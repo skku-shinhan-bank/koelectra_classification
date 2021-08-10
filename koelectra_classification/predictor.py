@@ -10,7 +10,7 @@ class KoElectraClassificationPredictor:
         device = torch.device(ctx)
 
         model = KoElectraClassificationModel(num_of_classes=num_of_classes)
-        checkpoint = torch.load(model_path)
+        checkpoint = torch.load(model_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
         model.to(device)
